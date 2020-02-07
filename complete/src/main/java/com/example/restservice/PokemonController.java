@@ -30,6 +30,42 @@ public class PokemonController {
 
         return getGeneration(generation);
     }
+
+    @RequestMapping(value = "/pokemon/random/image", method = RequestMethod.GET, produces = MediaType.IMAGE_PNG_VALUE)
+    public void getRandomImage(HttpServletResponse response) throws IOException {
+
+        GenerationResponse randomGeneration = getRandomGeneration();
+
+        int pokemonCount = randomGeneration.pokemonSpecies.length;
+
+        Random r = new Random();
+        int randomId = r.nextInt(pokemonCount) + 1;
+
+        String name = randomGeneration.pokemonSpecies[randomId].name;
+
+        PokemonResponse pokemon = getPokemon(name);
+
+        String url = pokemon.sprites.frontDefault;
+
+        BufferedImage img = ImageIO.read(new URL(url));
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        ImageIO.write(img, "png", bao);
+        response.getOutputStream().write(bao.toByteArray());
+    }
+
+    private PokemonResponse getPokemon(String name) {
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("User-Agent", "My Java API");
+
+        HttpEntity request = new HttpEntity(headers);
+
+        ResponseEntity<PokemonResponse> httpResponse = restTemplate.exchange("https://pokeapi.co/api/v2/pokemon/" + name, HttpMethod.GET, request, PokemonResponse.class);
+
+        return httpResponse.getBody();
+    }
+
     private GenerationResponse getGeneration(int gen) {
         RestTemplate restTemplate = new RestTemplate();
 
